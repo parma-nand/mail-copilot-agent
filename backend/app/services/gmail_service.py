@@ -40,3 +40,32 @@ def _summarize(service, msg_id):
         "date": headers.get("Date", ""),
         "is_read": "UNREAD" not in msg.get("labelIds", []),
     }
+async def start_watch(creds):
+    service = get_client(creds)
+    request_body = {
+        "labelIds": ["INBOX"],
+        "topicName": "projects/mail-copilot-agent/topics/gmail-notifications",
+    }
+    response = service.users().watch(userId="me", body=request_body).execute()
+    return response
+# backend/app/services/gmail_service.py
+async def get_history_since(creds, start_history_id):
+    service = get_client(creds)
+    try:
+        response = service.users().history().list(
+            userId="me",
+            startHistoryId=start_history_id,
+            historyTypes=["messageAdded"],
+        ).execute()
+    except Exception as e:
+        print(f"history.list error: {e}")
+        return []
+
+    new_message_ids = []
+    for record in response.get("history", []):
+        for added in record.get("messagesAdded", []):
+            new_message_ids.append(added["message"]["id"])
+
+    # Fetch summaries for each new message
+    new_emails = [_summarize(service, msg_id) for msg_id in new_message_ids]
+    return new_emails

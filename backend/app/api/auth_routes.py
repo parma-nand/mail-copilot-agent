@@ -1,6 +1,6 @@
 # backend/app/api/auth_routes.py
 import os
-os.environ["OAUTHLIB_RELAX_TOKEN_SCOPE"] = "1"  # keep this too, avoids a separate scope-mismatch issue
+os.environ["OAUTHLIB_RELAX_TOKEN_SCOPE"] = "1"
 
 from fastapi import APIRouter, HTTPException
 from google_auth_oauthlib.flow import Flow
@@ -9,7 +9,8 @@ from app.core.config import settings
 router = APIRouter()
 
 _stored_creds = {"creds": None}
-_stored_flow = {"flow": None}   # <-- add this
+_stored_flow = {"flow": None}
+_last_history_id = {"id": None}   # <-- ADD THIS LINE
 
 def get_flow():
     return Flow.from_client_config(
@@ -26,17 +27,17 @@ def get_flow():
 def login():
     flow = get_flow()
     auth_url, state = flow.authorization_url(prompt="consent", access_type="offline")
-    _stored_flow["flow"] = flow          # <-- save this exact instance
+    _stored_flow["flow"] = flow
     return {"auth_url": auth_url}
 
 @router.get("/auth/callback")
 def callback(code: str):
-    flow = _stored_flow["flow"]          # <-- reuse the same instance
+    flow = _stored_flow["flow"]
     if flow is None:
         raise HTTPException(400, "No pending login — visit /auth/login first")
     flow.fetch_token(code=code)
     _stored_creds["creds"] = flow.credentials
-    _stored_flow["flow"] = None          # clear after use
+    _stored_flow["flow"] = None
     return {"status": "connected"}
 
 def get_current_creds():
