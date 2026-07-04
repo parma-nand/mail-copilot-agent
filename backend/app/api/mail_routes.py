@@ -2,6 +2,7 @@
 from fastapi import APIRouter, Depends
 from app.services import gmail_service
 # creds dependency: pull from session/db for the logged-in user
+from app.api.auth_routes import get_current_creds
 
 router = APIRouter()
 
