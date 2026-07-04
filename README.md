@@ -155,3 +155,50 @@ These were deliberate simplifications made given the 5-day timeline — noted he
 - Unit/integration tests for the Gmail service layer and LangGraph tools
 
 ## Project Structure
+processity-mail-ai/
+├── backend/
+│   ├── app/
+│   │   ├── main.py                 # FastAPI app, CopilotKit endpoint mount
+│   │   ├── agent/
+│   │   │   ├── graph.py            # LangGraph StateGraph definition
+│   │   │   ├── state.py            # AgentState (Pydantic) - shared w/ frontend
+│   │   │   ├── nodes.py            # compose_node, search_node, navigate_node, reply_node
+│   │   │   └── tools.py            # @tool wrappers around gmail_service
+│   │   ├── services/
+│   │   │   ├── gmail_service.py    # Gmail API: list, get, send, search, watch
+│   │   │   ├── oauth_service.py    # Google OAuth2 flow, token refresh
+│   │   │   └── pubsub_service.py   # Pub/Sub push handler for real-time sync
+│   │   ├── api/
+│   │   │   ├── mail_routes.py      # REST: /inbox, /sent, /email/{id}, /send
+│   │   │   ├── auth_routes.py      # /auth/login, /auth/callback
+│   │   │   └── webhook_routes.py   # /webhooks/gmail (Pub/Sub push target)
+│   │   ├── db/
+│   │   │   ├── models.py           # User, OAuthToken, EmailCache (optional)
+│   │   │   └── session.py
+│   │   └── core/
+│   │       ├── config.py           # env vars, settings
+│   │       └── websocket_manager.py # push new-mail events to frontend
+│   ├── requirements.txt
+│   └── .env.example
+│
+├── frontend/
+│   ├── src/
+│   │   ├── app/
+│   │   │   ├── layout.tsx          # CopilotKit provider wraps app
+│   │   │   └── page.tsx
+│   │   ├── components/
+│   │   │   ├── Inbox/
+│   │   │   ├── Compose/            # reads agent state to auto-fill
+│   │   │   ├── EmailDetail/
+│   │   │   ├── Filters/            # dual control: UI + assistant
+│   │   │   └── AssistantPanel/     # CopilotSidebar / CopilotPopup
+│   │   ├── hooks/
+│   │   │   ├── useCoAgentState.ts  # subscribes to LangGraph shared state
+│   │   │   └── useMailSocket.ts    # WebSocket for real-time new-mail push
+│   │   ├── store/                  # Zustand: currentView, openEmailId, filters
+│   │   └── lib/api.ts
+│   ├── package.json
+│   └── .env.example
+│
+├── docker-compose.yml
+└── README.md
