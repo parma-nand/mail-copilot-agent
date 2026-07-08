@@ -69,3 +69,16 @@ async def get_history_since(creds, start_history_id):
     # Fetch summaries for each new message
     new_emails = [_summarize(service, msg_id) for msg_id in new_message_ids]
     return new_emails
+# backend/app/services/gmail_service.py — add this function
+async def search(creds, keyword=None, sender=None, date_from=None, date_to=None, read_status="all"):
+    results = await list_inbox(creds, max_results=50)
+    filtered = results
+    if keyword:
+        filtered = [e for e in filtered if keyword.lower() in e["subject"].lower() or keyword.lower() in e["preview"].lower()]
+    if sender:
+        filtered = [e for e in filtered if sender.lower() in e["sender"].lower()]
+    if read_status == "unread":
+        filtered = [e for e in filtered if not e["is_read"]]
+    elif read_status == "read":
+        filtered = [e for e in filtered if e["is_read"]]
+    return filtered
